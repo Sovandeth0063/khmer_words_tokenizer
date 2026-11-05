@@ -1,0 +1,38 @@
+# Package metadata and development-tool configuration for khmer-tokenizer.
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "khmer-tokenizer"
+version = "0.1.0"
+description = "Lightweight Khmer word tokenizer"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+khmer-tokenizer = "khmer_tokenizer.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["khmer_tokenizer*"]
+
+[tool.setuptools.package-data]
+khmer_tokenizer = ["py.typed"]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.8",
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
