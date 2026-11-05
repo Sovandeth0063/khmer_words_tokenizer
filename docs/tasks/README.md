@@ -13,8 +13,8 @@ release work is included only after the tokenizer pipeline is functional.
 
 | File | Focus | Expected result |
 |---|---|---|
-| [day-1-foundation-and-normalization.md](./day-1-foundation-and-normalization.md) | Project foundation and Unicode normalization | Normalized Khmer text and reliable KCC-safe input |
-| [day-2-segmentation-and-bimm.md](./day-2-segmentation-and-bimm.md) | Lexer, KCC segmenter, Trie, and BiMM | Working dictionary-based tokenizer engine |
+| [done/day-1-foundation-and-normalization.md](./done/day-1-foundation-and-normalization.md) | Project foundation and Unicode normalization | Completed: normalized Khmer text and reliable KCC-safe input |
+| [done/day-2-segmentation-and-bimm.md](./done/day-2-segmentation-and-bimm.md) | Lexer, KCC segmenter, Trie, and BiMM | Completed: working dictionary-based tokenizer engine |
 | [day-3-crf-pipeline-and-api.md](./day-3-crf-pipeline-and-api.md) | BIES features, CRF integration, and public API | Default hybrid tokenizer pipeline |
 | [day-4-cli-tests-and-performance.md](./day-4-cli-tests-and-performance.md) | CLI, edge cases, tests, and benchmarks | Usable and measurable library/CLI |
 | [day-5-hardening-and-release.md](./day-5-hardening-and-release.md) | Compatibility, packaging, documentation, and final verification | Release-ready MVP |
@@ -42,4 +42,3 @@ release work is included only after the tokenizer pipeline is functional.
 - Public API, CLI, tests, packaging metadata, and documentation are present.
 - Performance and memory measurements are captured against the PRD targets.
 - Unsupported or malformed input produces a controlled, documented result.
-

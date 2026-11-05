@@ -29,6 +29,7 @@ class NormalizedText:
 
 
 def _load_rules(path: Path) -> dict[str, object]:
+    """Load and validate the normalization configuration object."""
     try:
         with path.open(encoding="utf-8") as file:
             rules = json.load(file)
@@ -42,6 +43,7 @@ def _load_rules(path: Path) -> dict[str, object]:
 
 
 def _string_mapping(value: object, field: str) -> Mapping[str, str]:
+    """Validate a configuration mapping containing only strings."""
     if not isinstance(value, dict) or not all(
         isinstance(key, str) and isinstance(item, str)
         for key, item in value.items()
@@ -51,6 +53,7 @@ def _string_mapping(value: object, field: str) -> Mapping[str, str]:
 
 
 def _string_list(value: object, field: str) -> list[str]:
+    """Validate a configuration list containing only strings."""
     if not isinstance(value, list) or not all(
         isinstance(item, str) for item in value
     ):
@@ -62,6 +65,7 @@ class KhmerNormalizer:
     """Apply the project's Khmer Unicode normalization contract."""
 
     def __init__(self, rules_path: Optional[Union[str, Path]] = None) -> None:
+        """Load rules from the supplied or default configuration path."""
         path = (
             Path(rules_path)
             if rules_path is not None

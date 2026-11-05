@@ -14,10 +14,12 @@ from khmer_tokenizer.constants import (
 
 
 def _is_base(character: str) -> bool:
+    """Check whether a character is a Khmer base character."""
     return ord(character) in KHMER_BASE_RANGE
 
 
 def _mark_order(character: str) -> int:
+    """Return the canonical ordering group for a cluster character."""
     codepoint = ord(character)
     if character in {"\u17cc", "\u17c9", "\u17ca"}:
         return 0

@@ -11,7 +11,7 @@ from typing import Mapping
 def apply_character_replacements(
     text: str, replacements: Mapping[str, str]
 ) -> str:
-    """Apply configured literal replacements in one deterministic pass."""
+    """Apply configured literal character replacements."""
     for source, target in replacements.items():
         text = text.replace(source, target)
     return text
@@ -25,7 +25,7 @@ def resolve_shifter_collision(
     muusikatoan_bases: set[str],
     triisap_bases: set[str],
 ) -> str:
-    """Resolve a mistyped shifter using the preceding base and upper vowel."""
+    """Resolve a mistyped shifter using base and vowel context."""
     characters = list(text)
     for index, character in enumerate(characters):
         if character != source or index == 0:
