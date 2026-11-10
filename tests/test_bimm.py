@@ -56,8 +56,9 @@ def test_bimm_preserves_non_khmer_spans() -> None:
     tokenizer = BiMMTokenizer(Trie(["ប្រទេស"]))
     assert tokenizer.tokenize("ប្រទេស 12.5 https://example.com") == [
         "ប្រទេស",
-        " ",
         "12.5",
-        " ",
         "https://example.com",
     ]
+    assert tokenizer.tokenize(
+        "ប្រទេស 12.5 https://example.com", keep_whitespace=True
+    ) == ["ប្រទេស", " ", "12.5", " ", "https://example.com"]

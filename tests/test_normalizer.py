@@ -3,8 +3,8 @@ Module: test_normalizer.py
 Purpose: Test Day 1 Khmer Unicode normalization behavior.
 Usage: python -m pytest tests\\test_normalizer.py -v
 """
-from pathlib import Path
 import unicodedata
+from pathlib import Path
 
 import pytest
 

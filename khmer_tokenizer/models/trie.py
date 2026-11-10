@@ -26,6 +26,7 @@ class Trie:
 
     def __init__(self, words: Iterable[str] = ()) -> None:
         self._root = _TrieNode()
+        self._base_words: set[str] = set()
         self._custom_words: set[str] = set()
         for word in words:
             self.add_word(word)
@@ -41,6 +42,8 @@ class Trie:
         node.terminal = True
         if custom:
             self._custom_words.add(word.strip())
+        else:
+            self._base_words.add(word.strip())
 
     def remove_word(self, word: str) -> None:
         """Remove a word from the Trie without affecting other entries."""
@@ -53,10 +56,13 @@ class Trie:
                 return
             path.append((node, cluster, child))
             node = child
-        if not node.terminal:
+        normalized_word = word.strip()
+        if normalized_word not in self._custom_words:
+            return
+        self._custom_words.remove(normalized_word)
+        if normalized_word in self._base_words:
             return
         node.terminal = False
-        self._custom_words.discard(word.strip())
         for parent, cluster, child in reversed(path):
             if child.terminal or child.children:
                 break
@@ -73,6 +79,23 @@ class Trie:
             if node.terminal:
                 longest = index - start + 1
         return longest
+
+    def match_lengths(self, clusters: list[str], start: int = 0) -> list[int]:
+        """Return all terminal word lengths at a sequence position."""
+        node = self._root
+        lengths: list[int] = []
+        for index in range(start, len(clusters)):
+            node = node.children.get(clusters[index])
+            if node is None:
+                break
+            if node.terminal:
+                lengths.append(index - start + 1)
+        return lengths
+
+    @property
+    def custom_words(self) -> frozenset[str]:
+        """Return custom dictionary words without exposing mutable state."""
+        return frozenset(self._custom_words)
 
     @classmethod
     def from_file(cls, path: Union[str, Path]) -> "Trie":

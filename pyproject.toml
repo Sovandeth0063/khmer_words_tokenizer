@@ -5,10 +5,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "khmer-tokenizer"
-version = "0.1.0"
+version = "0.1.1"
 description = "Lightweight Khmer word tokenizer"
 requires-python = ">=3.9"
 dependencies = []
+license = { file = "LICENSE" }
+authors = [{ name = "Khmer Tokenizer Contributors" }]
 
 [project.scripts]
 khmer-tokenizer = "khmer_tokenizer.cli:main"
@@ -17,7 +19,12 @@ khmer-tokenizer = "khmer_tokenizer.cli:main"
 include = ["khmer_tokenizer*"]
 
 [tool.setuptools.package-data]
-khmer_tokenizer = ["py.typed"]
+khmer_tokenizer = [
+    "resources/*.txt",
+    "resources/*.crfsuite",
+    "resources/*.json",
+    "py.typed",
+]
 
 [project.optional-dependencies]
 dev = [

@@ -15,9 +15,9 @@ release work is included only after the tokenizer pipeline is functional.
 |---|---|---|
 | [done/day-1-foundation-and-normalization.md](./done/day-1-foundation-and-normalization.md) | Project foundation and Unicode normalization | Completed: normalized Khmer text and reliable KCC-safe input |
 | [done/day-2-segmentation-and-bimm.md](./done/day-2-segmentation-and-bimm.md) | Lexer, KCC segmenter, Trie, and BiMM | Completed: working dictionary-based tokenizer engine |
-| [day-3-crf-pipeline-and-api.md](./day-3-crf-pipeline-and-api.md) | BIES features, CRF integration, and public API | Default hybrid tokenizer pipeline |
-| [day-4-cli-tests-and-performance.md](./day-4-cli-tests-and-performance.md) | CLI, edge cases, tests, and benchmarks | Usable and measurable library/CLI |
-| [day-5-hardening-and-release.md](./day-5-hardening-and-release.md) | Compatibility, packaging, documentation, and final verification | Release-ready MVP |
+| [done/day-3-crf-pipeline-and-api.md](./done/day-3-crf-pipeline-and-api.md) | BIES features, CRF integration, and public API | Completed: default hybrid tokenizer pipeline |
+| [done/day-4-cli-tests-and-performance.md](./done/day-4-cli-tests-and-performance.md) | CLI, edge cases, tests, and benchmarks | Implemented: CLI, tests, benchmarks, and CI |
+| [done/day-5-hardening-and-release.md](./done/day-5-hardening-and-release.md) | Compatibility, packaging, documentation, and final verification | Implemented: release-ready MVP |
 
 ## Priority Rules
 

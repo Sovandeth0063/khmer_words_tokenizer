@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Khmer Word Tokenizer</title>
+  <link rel="stylesheet" href="/tokenizer.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">Khmer NLP tool</p>
+      <h1>Khmer Word Tokenizer</h1>
+      <p class="intro">Enter Khmer text and see how it is separated into words.</p>
+    </header>
+
+    <section class="panel" aria-labelledby="input-title">
+      <div class="panel-heading">
+        <div>
+          <p class="section-label">Input</p>
+          <h2 id="input-title">Your Khmer text</h2>
+        </div>
+        <label class="engine">
+          <span>Engine</span>
+          <select id="engine" aria-label="Tokenizer engine">
+            <option value="crf">CRF (default)</option>
+            <option value="bimm">BiMM (fast)</option>
+          </select>
+        </label>
+      </div>
+      <textarea id="source" rows="5"
+        placeholder="ខ្ញុំស្រឡាញ់ប្រទេសកម្ពុជា"
+        aria-label="Khmer text to tokenize"></textarea>
+      <div class="actions">
+        <button id="tokenize" class="primary" type="button">Tokenize text</button>
+        <button id="clear" class="secondary" type="button">Clear</button>
+      </div>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel result-panel" aria-labelledby="result-title">
+      <div class="panel-heading">
+        <div>
+          <p class="section-label">Result</p>
+          <h2 id="result-title">Tokenized words</h2>
+        </div>
+        <span id="count" class="count">0 tokens</span>
+      </div>
+      <div id="tokens" class="tokens empty" aria-live="polite">
+        Your tokens will appear here.
+      </div>
+      <details>
+        <summary>View JSON</summary>
+        <pre id="json">[]</pre>
+      </details>
+    </section>
+
+    <p class="footer">Powered by the project Khmer tokenizer API.</p>
+  </main>
+  <script>
+    const source = document.querySelector("#source");
+    const engine = document.querySelector("#engine");
+    const tokens = document.querySelector("#tokens");
+    const json = document.querySelector("#json");
+    const count = document.querySelector("#count");
+    const status = document.querySelector("#status");
+
+    function renderResult(items) {
+      tokens.classList.toggle("empty", items.length === 0);
+      tokens.textContent = "";
+      items.forEach((item) => {
+        const chip = document.createElement("span");
+        chip.className = "token";
+        chip.textContent = item === " " ? "space" : item;
+        chip.title = item;
+        tokens.appendChild(chip);
+      });
+      if (items.length === 0) {
+        tokens.textContent = "Your tokens will appear here.";
+      }
+      count.textContent = `${items.length} token${items.length === 1 ? "" : "s"}`;
+      json.textContent = JSON.stringify(items, null, 2);
+    }
+
+    document.querySelector("#tokenize").addEventListener("click", async () => {
+      const text = source.value;
+      if (!text) {
+        renderResult([]);
+        status.textContent = "Enter some Khmer text first.";
+        return;
+      }
+      status.textContent = "Tokenizing…";
+      try {
+        const response = await fetch("/api/tokenize", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({text, engine: engine.value})
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Tokenization failed.");
+        renderResult(payload.tokens);
+        status.textContent = "Done.";
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    });
+
+    document.querySelector("#clear").addEventListener("click", () => {
+      source.value = "";
+      renderResult([]);
+      status.textContent = "";
+      source.focus();
+    });
+
+    source.value = "ខ្ញុំស្រឡាញ់ប្រទេសកម្ពុជា";
+  </script>
+</body>
+</html>

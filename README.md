@@ -13,7 +13,7 @@ project is designed to provide a production-ready tokenizer based on:
 
 ## Project Status
 
-Day 1 foundation is implemented:
+Days 1-5 are implemented as a release-ready MVP:
 
 - Unicode NFC normalization
 - Split composite-vowel merging
@@ -22,9 +22,20 @@ Day 1 foundation is implemented:
 - Zero-width-space boundary extraction
 - Khmer cluster mark reordering
 - Focused normalization tests
+- KCC segmentation and BiMM dictionary matching
+- Trie dictionary preparation from the raw CSV
+- CRF + Trie BIES baseline
+- Public `tokenize()` and `KhmerTokenizer` APIs
+- Custom dictionary overrides
+- Dataset preparation for KCC-level BIES training
+- Streaming command-line interface
+- Edge-case tests and JSON benchmark output
+- CI test, lint, type-check, and package-build workflows
+- Wheel and source distribution packaging
 
-The remaining tokenizer engines, CLI behavior, model artifacts, and release
-packaging are planned in the [five-day task plan](docs/tasks/README.md).
+The current CRF artifact is a deterministic Trie-backed BIES baseline. It is
+not a trained `python-crfsuite` weight file, so quality targets require a
+representative gold-standard corpus before they can be certified.
 
 ## Requirements
 
@@ -44,6 +55,112 @@ If the Python Launcher is used on Windows:
 ```powershell
 py -m pip install -e ".[dev]"
 ```
+
+Install the latest local wheel:
+
+```powershell
+py -m pip install dist\khmer_tokenizer-0.1.1-py3-none-any.whl
+```
+
+## Quickstart
+
+```python
+from khmer_tokenizer import tokenize
+
+tokens = tokenize("ខ្ញុំស្រឡាញ់ប្រទេសកម្ពុជា")
+print(tokens)
+# ["ខ្ញុំ", "ស្រឡាញ់", "ប្រទេស", "កម្ពុជា"]
+```
+
+Whitespace is not returned as a token by default. Preserve it when needed:
+
+```python
+tokens = tokenize("ក ខ", keep_whitespace=True)
+# ["ក", " ", "ខ"]
+```
+
+Use the alternative BiMM engine:
+
+```python
+from khmer_tokenizer import KhmerTokenizer
+
+tokenizer = KhmerTokenizer(engine="bimm")
+tokens = tokenizer.tokenize("ខ្ញុំស្រឡាញ់ប្រទេសកម្ពុជា")
+```
+
+Add a custom word:
+
+```python
+tokenizer = KhmerTokenizer()
+tokenizer.add_word("ប្រទេសកម្ពុជា")
+assert tokenizer.tokenize("ប្រទេសកម្ពុជា") == ["ប្រទេសកម្ពុជា"]
+```
+
+## Command-Line Usage
+
+Read from standard input and write space-separated tokens:
+
+```powershell
+py -m khmer_tokenizer.cli
+```
+
+Process a file with the BiMM engine and write another file:
+
+```powershell
+khmer-tokenizer `
+  --input data\input.txt `
+  --output data\output.txt `
+  --engine bimm `
+  --delimiter " "
+```
+
+The CLI processes one line at a time. Invalid arguments return a non-zero
+status and display an error message.
+
+For a quick one-sentence result, use the helper script:
+
+```powershell
+py scripts\tokenize_text.py "ខ្ញុំស្រឡាញ់ប្រទេសកម្ពុជា"
+```
+
+Output:
+
+```json
+["ខ្ញុំ", "ស្រឡាញ់", "ប្រទេស", "កម្ពុជា"]
+```
+
+You can also run it without text and enter the sentence when prompted:
+
+```powershell
+py scripts\tokenize_text.py
+```
+
+## Browser Interface
+
+To use a visual HTML interface instead of the terminal:
+
+```powershell
+py scripts\web_app.py
+```
+
+Open [http://127.0.0.1:8765](http://127.0.0.1:8765) in a browser. Enter Khmer
+text, choose CRF or BiMM, and click **Tokenize text**. Press `Ctrl+C` in the
+server terminal to stop it.
+
+## Benchmarking
+
+Run a repeatable JSON benchmark:
+
+```powershell
+py scripts\benchmark.py `
+  --input data\benchmark.txt `
+  --gold data\benchmark.gold.txt `
+  --iterations 5 `
+  --output benchmark.json
+```
+
+The optional gold file contains whitespace-separated expected tokens. Without
+it, runtime metrics are reported but accuracy metrics are left as `null`.
 
 ## Current Normalization API
 
@@ -89,6 +206,8 @@ tests/             Automated tests
 - [Product requirements](docs/architecture/product_requirements_document.md)
 - [System architecture](docs/architecture/system_architecture.md)
 - [Implementation tasks](docs/tasks/README.md)
+- [End-to-end example](docs/architecture/example_end_to_end.md)
+- [Day 5 release report](docs/report/day-5-report.md)
 
 ## Scope
 

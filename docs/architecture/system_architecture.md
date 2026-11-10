@@ -47,33 +47,115 @@ Standard Unicode `NFC` does not resolve Khmer-specific orthographic collisions. 
 
 ## 3. End-to-End Data Flow & Pipeline Architecture
 
-```mermaid
-flowchart TD
-    subgraph Ingestion["1. Ingestion & Khmer Normalization"]
-        A["Raw Input: 'ខ្ញុំស្រឡាញ់ប្រទេសកម្ពុជា'"] --> B["Unicode Normalizer (NFC, Composite Vowels, Shifter Fix, Canonical Reorder)"]
-        B --> C["ZWSP Cue Extractor & Control Char Cleaner"]
-    end
-
-    subgraph Segmentation["2. Pre-Lexing & Atomic KCC Chunking"]
-        C --> D["Pre-Segmentation Lexer (Isolate Numbers, Latin, URLs, Punctuation)"]
-        D --> E["Khmer Character Cluster (KCC) Regex Engine"]
-        E --> F["KCC Stream: ['ខ្ញុំ', 'ស្រ', 'ឡា', 'ញ់', 'ប្រ', 'ទេ', 'ស', 'ក', 'ម្ពុ', 'ជា']"]
-    end
-
-    subgraph BoundaryPrediction["3. Feature Extraction & Sequence Tagging"]
-        F --> G["Feature Extractor (KCC n-grams, Orthographic flags, Trie match lengths, ZWSP cues)"]
-        G --> H{"Inference Engine"}
-        H -->|"Default (High Accuracy)"| I["Linear-Chain CRF Model (BIES Tagging)"]
-        H -->|"Fast Fallback"| J["Bi-Directional Maximal Matching (BiMM Trie)"]
-        I --> K["Constrained Tag Overrides (Enforce Custom Dictionary)"]
-        J --> K
-        K --> L["BIES Tags: ['S', 'B', 'I', 'E', 'B', 'I', 'E', 'B', 'I', 'E']"]
-    end
-
-    subgraph Assembly["4. Token Assembly"]
-        L --> M["BIES Token Reconstructor"]
-        M --> N["Final Token List: ['ខ្ញុំ', 'ស្រឡាញ់', 'ប្រទេស', 'កម្ពុជា']"]
-    end
+```text
+                         ┌──────────────────────────────────────────┐
+                         │ Raw Input                                 │
+                         │ "ខ្ញុំស្រឡាញ់ប្រទេសកម្ពុជា"              │
+                         └────────────────────┬─────────────────────┘
+                                              │
+                                              ▼
+             ┌────────────────────────────────────────────────────────┐
+             │ 1. Clean and Fix Khmer Text                            │
+             │                                                        │
+             │ • Put letters into one standard format                 │
+             │ • Join split vowels                                    │
+             │ • Fix Khmer marks                                      │
+             │ • Remove old or invalid characters                     │
+             │ • Put Khmer letters in the correct order               │
+             └────────────────────┬───────────────────────────────────┘
+                                  │
+                                  ▼
+             ┌────────────────────────────────────────────────────────┐
+             │ 2. Find Word Boundaries and Remove Hidden Characters   │
+             │                                                        │
+             │ • Save the positions of hidden spaces                 │
+             │ • Remove hidden characters from the text               │
+             │ • Return clean text and saved boundary information     │
+             └────────────────────┬───────────────────────────────────┘
+                                  │
+                                  ▼
+             ┌────────────────────────────────────────────────────────┐
+             │ 3. Separate Non-Khmer Text                            │
+             │                                                        │
+             │ • Keep website links and email addresses together       │
+             │ • Keep English and mixed-language text together        │
+             │ • Keep numbers and decimal numbers together             │
+             │ • Keep punctuation and emojis                         │
+             │ • Ignore spaces by default; preserve them when needed  │
+             └────────────────────┬───────────────────────────────────┘
+                                  │
+                                  ▼
+             ┌────────────────────────────────────────────────────────┐
+             │ 4. Split Khmer into Letter Groups                      │
+             │                                                        │
+             │ • Split Khmer text into small letter groups             │
+             │ • Keep Coeng and subscript letters together             │
+             │ • Keep vowels and marks with their letters              │
+             │ • Example: ប្រទេស → [ប្រ, ទេ, ស]                    │
+             └────────────────────┬───────────────────────────────────┘
+                                  │
+                                  ▼
+             ┌────────────────────────────────────────────────────────┐
+             │ Khmer Letter Groups                                   │
+             │                                                        │
+             │ [ខ្ញុំ, ស្រ, ឡា, ញ់, ប្រ, ទេ, ស, ក, ម្ពុ, ជា]        │
+             └────────────────────┬───────────────────────────────────┘
+                                  │
+                                  ▼
+             ┌────────────────────────────────────────────────────────┐
+             │ 5. Collect Information for Word Splitting              │
+             │                                                        │
+             │ • Look at nearby letter groups                         │
+             │ • Compare one, two, and three groups                   │
+             │ • Check letters, marks, and spelling patterns           │
+             │ • Check matching words in the dictionary               │
+             │ • Check saved word-boundary positions                  │
+             └────────────────────┬───────────────────────────────────┘
+                                  │
+                                  ▼
+             ┌──────────────────── Choose a Word Splitter ────────────┐
+             │                                                        │
+             │  ┌──────────────────────────┐  ┌─────────────────────┐ │
+             │  │ Main method: CRF         │  │ Fast method: BiMM   │ │
+             │  │                          │  │                     │ │
+             │  │ • Find word boundaries   │  │ • Match from both   │ │
+             │  │ • Uses the dictionary   │  │   directions         │ │
+             │  │ • Uses only the CPU     │  │ • Uses dictionary    │ │
+             │  └──────────────┬───────────┘  └──────────┬──────────┘ │
+             │                 └──────────────┬─────────┘            │
+             └────────────────────────────────┼──────────────────────┘
+                                              │
+                                              ▼
+             ┌────────────────────────────────────────────────────────┐
+             │ 6. Apply User Dictionary                                │
+             │                                                        │
+             │ • Add words from add_word()                            │
+             │ • Add words from a custom dictionary file              │
+             │ • Keep matching words together                          │
+             └────────────────────┬───────────────────────────────────┘
+                                  │
+                                  ▼
+             ┌────────────────────────────────────────────────────────┐
+             │ Word Boundary Labels                                  │
+             │                                                        │
+             │ [S, B, I, E, B, I, E, B, I, E]                       │
+             └────────────────────┬───────────────────────────────────┘
+                                  │
+                                  ▼
+             ┌────────────────────────────────────────────────────────┐
+             │ 7. Build the Final Words                               │
+             │                                                        │
+             │ • Join letter groups into words                        │
+             │ • Keep single groups as one word                       │
+             │ • Keep English, numbers, and symbols unchanged         │
+             └────────────────────┬───────────────────────────────────┘
+                                  │
+                                  ▼
+             ┌──────────────────────────────────────────┐
+             │ Final Token List                         │
+             │                                          │
+             │ [ខ្ញុំ, ស្រឡាញ់, ប្រទេស, កម្ពុជា]       │
+             └──────────────────────────────────────────┘
 ```
 
 ---

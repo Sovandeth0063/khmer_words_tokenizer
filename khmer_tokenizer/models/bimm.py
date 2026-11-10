@@ -77,13 +77,13 @@ class BiMMTokenizer:
             key=self._score,
         )
 
-    def tokenize(self, text: str) -> list[str]:
+    def tokenize(self, text: str, keep_whitespace: bool = False) -> list[str]:
         """Normalize and tokenize Khmer and passthrough spans."""
         normalized = normalize(text)
         output: list[str] = []
         for span in lex(normalized.text):
             if span.kind == "khmer":
                 output.extend(self.segment(span.text))
-            else:
+            elif span.kind != "whitespace" or keep_whitespace:
                 output.append(span.text)
         return output

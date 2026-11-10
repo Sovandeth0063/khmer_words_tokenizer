@@ -1,5 +1,9 @@
 # Day 4 - CLI, Edge Cases, Tests, and Performance
 
+> **Status: Implemented.** Runtime and quality measurements are available. The
+> PRD performance and quality targets still require a representative benchmark
+> corpus before they can be certified.
+
 ## Objective
 
 Make the tokenizer usable from the command line, cover production edge cases,
@@ -73,3 +77,11 @@ and measure the required quality and resource targets.
 - Run CLI tests through stdin, stdout, and file input/output.
 - Run the benchmark suite at least twice and record stable results.
 
+## Implementation Notes
+
+- `khmer_tokenizer.cli` streams input line by line from stdin or a file.
+- `scripts/benchmark.py` reports JSON runtime metrics and accepts an optional
+  whitespace-segmented `--gold` file for quality metrics.
+- Edge cases and CLI behavior are covered by `tests/test_edge_cases.py` and
+  `tests/test_cli.py`.
+- CI runs tests, Ruff, and mypy on supported Python versions.

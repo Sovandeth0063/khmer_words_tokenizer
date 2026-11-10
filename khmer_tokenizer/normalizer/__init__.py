@@ -69,8 +69,12 @@ class KhmerNormalizer:
         path = (
             Path(rules_path)
             if rules_path is not None
-            else Path(__file__).parents[2] / "configs" / "normalizer_rules.json"
+            else Path(__file__).parent.parent
+            / "resources"
+            / "normalizer_rules.json"
         )
+        if rules_path is None and not path.exists():
+            path = Path(__file__).parents[2] / "configs" / "normalizer_rules.json"
         rules = _load_rules(path)
         try:
             composite_vowels = _string_mapping(

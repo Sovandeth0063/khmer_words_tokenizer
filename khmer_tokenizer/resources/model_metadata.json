@@ -1,0 +1,13 @@
+{
+  "artifact": "crf_khmer_base.crfsuite",
+  "artifact_version": "1",
+  "project_version": "0.1.1",
+  "strategy": "trie-bies-baseline",
+  "training_date": null,
+  "training_status": "deterministic baseline; not trained CRF weights",
+  "metrics": {
+    "word_f1": null,
+    "boundary_f1": null,
+    "broken_cluster_rate": 0.0
+  }
+}
