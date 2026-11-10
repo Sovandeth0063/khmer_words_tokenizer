@@ -45,6 +45,7 @@ class KhmerTokenizer:
             raise ValueError("engine must be 'crf' or 'bimm'")
         self.engine = engine
         self._bimm = BiMMTokenizer(self.trie)
+        self._crf: Optional[CRFEngine]
         default_model = (
             Path(__file__).parent / "resources" / "crf_khmer_base.crfsuite"
         )

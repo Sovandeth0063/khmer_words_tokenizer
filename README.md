@@ -37,6 +37,67 @@ The current CRF artifact is a deterministic Trie-backed BIES baseline. It is
 not a trained `python-crfsuite` weight file, so quality targets require a
 representative gold-standard corpus before they can be certified.
 
+## Project Architecture
+
+The tokenizer processes text through a layered pipeline:
+
+1. **Normalization** applies Unicode NFC normalization, Khmer-specific
+   character replacements, register-shifter fixes, cluster reordering, and
+   zero-width-space boundary extraction.
+2. **Lexical segmentation** separates Khmer spans from whitespace, punctuation,
+   numbers, and other non-Khmer text.
+3. **KCC segmentation** preserves Khmer Character Clusters as the atomic units
+   used by the tokenizer.
+4. **Word segmentation** uses either the default CRF/Trie BIES engine or the
+   alternative BiMM dictionary engine.
+5. **Post-processing** assembles predicted boundaries into final word tokens
+   while preserving the original non-Khmer spans.
+
+The public API is exposed through `khmer_tokenizer`, the command-line
+interface through `khmer_tokenizer.cli`, and the local browser interface
+through `scripts\web_app.py`. See the detailed [system architecture](docs/architecture/system_architecture.md)
+for the data flow, module responsibilities, and design decisions.
+
+### Khmer Sentence Tokenization Pipeline
+
+For example, the input sentence:
+
+```text
+ខ្ញុំស្រឡាញ់ប្រទេសកម្ពុជា
+```
+
+passes through the following stages:
+
+```text
+Raw Khmer sentence
+        │
+        ▼
+Normalize Khmer Unicode
+        │  NFC normalization, vowel fixes, mark reordering,
+        │  deprecated-character cleanup, and ZWSP boundary cues
+        ▼
+Detect text spans
+        │  Khmer text is processed separately from spaces,
+        │  punctuation, numbers, and Latin text
+        ▼
+Split into Khmer Character Clusters (KCC)
+        │  KCCs keep consonants, subscripts, vowels, and marks together
+        ▼
+Predict word boundaries
+        │  CRF + Trie BIES engine (default)
+        │  or BiMM dictionary matching engine
+        ▼
+Assemble tokens
+        │
+        ▼
+["ខ្ញុំ", "ស្រឡាញ់", "ប្រទេស", "កម្ពុជា"]
+```
+
+Internally, the segmentation engine predicts BIES boundary tags over KCC
+units. `B` means the beginning of a word, `I` means inside a word, `E` means
+the end of a word, and `S` means a single-unit word. The post-processor then
+joins the units between those boundaries into the final word tokens.
+
 ## Requirements
 
 - Python 3.9 or newer

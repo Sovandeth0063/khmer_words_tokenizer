@@ -73,9 +73,10 @@ class Trie:
         node = self._root
         longest = 0
         for index in range(start, len(clusters)):
-            node = node.children.get(clusters[index])
-            if node is None:
+            child = node.children.get(clusters[index])
+            if child is None:
                 break
+            node = child
             if node.terminal:
                 longest = index - start + 1
         return longest
@@ -85,9 +86,10 @@ class Trie:
         node = self._root
         lengths: list[int] = []
         for index in range(start, len(clusters)):
-            node = node.children.get(clusters[index])
-            if node is None:
+            child = node.children.get(clusters[index])
+            if child is None:
                 break
+            node = child
             if node.terminal:
                 lengths.append(index - start + 1)
         return lengths

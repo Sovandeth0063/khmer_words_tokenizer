@@ -55,12 +55,13 @@ class CRFEngine:
         )
         choices[0] = (0.0, 0, 0)
         for index in range(len(kccs)):
-            if choices[index] is None:
+            choice = choices[index]
+            if choice is None:
                 continue
             matches = self.trie.match_lengths(kccs, index)
             for length in matches or [1]:
                 end = index + length
-                score = choices[index][0]
+                score = choice[0]
                 if not matches:
                     score -= 0.5
                 elif length == 1:
@@ -69,7 +70,8 @@ class CRFEngine:
                     score += 1.0 + 0.5 * min(length - 1, 2)
                     score -= 0.1 * max(0, length - 3)
                 candidate = (score, length, length)
-                if choices[end] is None or candidate > choices[end]:
+                current = choices[end]
+                if current is None or candidate > current:
                     choices[end] = candidate
         index = len(kccs)
         boundaries[index] = True

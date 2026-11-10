@@ -122,7 +122,7 @@ class KhmerNormalizer:
         """Normalize text and return its cleaned form with ZWSP positions."""
         normalized = unicodedata.normalize("NFC", text)
         normalized = apply_character_replacements(
-            normalized, self._deprecated | self._composite_vowels
+            normalized, {**self._deprecated, **self._composite_vowels}
         )
         normalized = resolve_shifter_collision(
             normalized,
