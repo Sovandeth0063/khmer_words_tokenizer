@@ -241,12 +241,10 @@ khmer-tokenizer/
 │   ├── PRD.md                         # Product requirements document
 │   └── API_REFERENCE.md               # Public class and function documentation
 ├── configs/
-│   ├── default_crf.yaml               # Hyperparameters for CRF model training
 │   └── normalizer_rules.json          # Composite vowel and canonical ordering tables
 ├── data/
 │   ├── dictionaries/
 │   │   ├── chuon_nath_dict.txt        # Chuon Nath base lexical dictionary
-│   │   └── custom_names.txt           # Common proper nouns (e.g., កម្ពុជា, ភ្នំពេញ)
 │   └── corpora/
 │       ├── raw/                       # Unprocessed segmented Khmer text dumps
 │       └── processed/                 # KCC-level BIES format train/dev/test splits
@@ -278,12 +276,11 @@ khmer-tokenizer/
 │   └── cli.py                         # Command-line interface for file/stream processing
 ├── pretrained/
 │   ├── crf_khmer_base.crfsuite        # Pretrained lightweight CRF model weights
-│   ├── lexicon.trie                   # Compiled binary lexicon Trie
 │   └── model_metadata.json            # Model version, training date, F1 metrics
 ├── scripts/
 │   ├── benchmark.py                   # Speed and memory benchmarking script
 │   ├── build_kcc_dataset.py           # Convert word-segmented corpus to KCC BIES tags
-│   └── train_crf.py                   # Train and export CRF model script
+│   └── tokenize_text.py               # Tokenize text from the command line
 ├── tests/
 │   ├── __init__.py
 │   ├── test_normalizer.py             # Unit tests for composite vowels & reordering
