@@ -10,9 +10,9 @@ from pathlib import Path
 import pytest
 
 from tokenizer import KhmerTokenizer, apply_maximum, tokenize
-from tokenizer.exceptions import MalformedModelError
 from tokenizer.assembler import assemble_tokens
 from tokenizer.crf import CRFEngine, extract_features
+from tokenizer.exceptions import MalformedModelError
 from tokenizer.trie import Trie
 
 
