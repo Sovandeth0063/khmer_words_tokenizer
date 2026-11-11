@@ -10,7 +10,7 @@ import json
 import sys
 from typing import Optional
 
-from khmer_tokenizer import KhmerTokenizer
+from tokenizer import KhmerTokenizer
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -27,6 +27,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="crf",
         help="Tokenizer engine to use (default: crf).",
     )
+    parser.add_argument(
+        "--khmer-only",
+        action="store_true",
+        help="Exclude non-Khmer tokens from output.",
+    )
     return parser
 
 
@@ -34,7 +39,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     """Read Khmer text, tokenize it, and print a JSON list."""
     args = build_parser().parse_args(argv)
     text = args.text if args.text is not None else input("Enter Khmer text: ")
-    tokens = KhmerTokenizer(engine=args.engine).tokenize(text)
+    tokens = KhmerTokenizer(engine=args.engine).tokenize(
+        text, khmer_only=args.khmer_only
+    )
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     print(json.dumps(tokens, ensure_ascii=False))

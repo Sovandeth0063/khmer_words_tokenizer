@@ -1,7 +1,7 @@
 """
 Module: exceptions.py
 Purpose: Define explicit tokenizer configuration and setup exceptions.
-Usage: from khmer_tokenizer.exceptions import InvalidConfigurationError
+Usage: from tokenizer.exceptions import InvalidConfigurationError
 """
 class TokenizerError(Exception):
     """Base exception for tokenizer configuration and processing failures."""

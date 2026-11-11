@@ -8,9 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from khmer_tokenizer.exceptions import InvalidConfigurationError
-from khmer_tokenizer.normalizer import KhmerNormalizer, normalize
-from khmer_tokenizer.normalizer.reorder import reorder_khmer_clusters
+from tokenizer.exceptions import InvalidConfigurationError
+from tokenizer.normalizer import KhmerNormalizer, normalize, reorder_khmer_clusters
 
 
 def test_nfc_equivalent_input_has_same_result() -> None:

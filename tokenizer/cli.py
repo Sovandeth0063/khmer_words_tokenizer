@@ -1,7 +1,7 @@
 """
 Module: cli.py
 Purpose: Stream Khmer text through the tokenizer from the command line.
-Usage: python -m khmer_tokenizer.cli --input data.txt --output tokens.txt
+Usage: python -m tokenizer.cli --input data.txt --output tokens.txt
 """
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Optional, TextIO
 
-from khmer_tokenizer import KhmerTokenizer
+from tokenizer import KhmerTokenizer
 
 
 def _open_input(path: Optional[Path]) -> TextIO:
@@ -28,12 +28,15 @@ def process_stream(
     target: TextIO,
     tokenizer: KhmerTokenizer,
     delimiter: str,
+    khmer_only: bool = False,
 ) -> None:
     """Tokenize one input line at a time without loading the complete file."""
     for line in source:
         newline = "\n" if line.endswith(("\n", "\r")) else ""
         text = line.rstrip("\r\n")
-        target.write(delimiter.join(tokenizer.tokenize(text)))
+        target.write(
+            delimiter.join(tokenizer.tokenize(text, khmer_only=khmer_only))
+        )
         target.write(newline)
 
 
@@ -53,6 +56,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="crf",
         help="Tokenizer engine to use (default: crf).",
     )
+    parser.add_argument(
+        "--khmer-only",
+        action="store_true",
+        help="Exclude non-Khmer tokens from output.",
+    )
     return parser
 
 
@@ -65,7 +73,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     source = _open_input(args.input)
     target = _open_output(args.output)
     try:
-        process_stream(source, target, tokenizer, args.delimiter)
+        process_stream(
+            source,
+            target,
+            tokenizer,
+            args.delimiter,
+            khmer_only=args.khmer_only,
+        )
     finally:
         if args.input:
             source.close()

@@ -34,6 +34,10 @@
       <div class="actions">
         <button id="tokenize" class="primary" type="button">Tokenize text</button>
         <button id="clear" class="secondary" type="button">Clear</button>
+        <label class="toggle">
+          <input id="khmer-only" type="checkbox" checked>
+          <span>Khmer words only</span>
+        </label>
       </div>
       <p id="status" class="status" role="status" aria-live="polite"></p>
     </section>
@@ -60,6 +64,7 @@
   <script>
     const source = document.querySelector("#source");
     const engine = document.querySelector("#engine");
+    const khmerOnly = document.querySelector("#khmer-only");
     const tokens = document.querySelector("#tokens");
     const json = document.querySelector("#json");
     const count = document.querySelector("#count");
@@ -82,7 +87,7 @@
       json.textContent = JSON.stringify(items, null, 2);
     }
 
-    document.querySelector("#tokenize").addEventListener("click", async () => {
+    async function runTokenize() {
       const text = source.value;
       if (!text) {
         renderResult([]);
@@ -94,7 +99,11 @@
         const response = await fetch("/api/tokenize", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({text, engine: engine.value})
+          body: JSON.stringify({
+            text,
+            engine: engine.value,
+            khmer_only: khmerOnly.checked
+          })
         });
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error || "Tokenization failed.");
@@ -103,6 +112,14 @@
       } catch (error) {
         status.textContent = error.message;
       }
+    }
+
+    document.querySelector("#tokenize").addEventListener("click", runTokenize);
+    khmerOnly.addEventListener("change", () => {
+      if (source.value) runTokenize();
+    });
+    engine.addEventListener("change", () => {
+      if (source.value) runTokenize();
     });
 
     document.querySelector("#clear").addEventListener("click", () => {

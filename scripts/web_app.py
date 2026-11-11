@@ -19,7 +19,7 @@ WEB_ROOT = ROOT / "web"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from khmer_tokenizer import KhmerTokenizer
+from tokenizer import KhmerTokenizer
 
 
 class TokenizerHandler(BaseHTTPRequestHandler):
@@ -57,9 +57,18 @@ class TokenizerHandler(BaseHTTPRequestHandler):
             payload: dict[str, Any] = json.loads(self.rfile.read(length))
             text = payload["text"]
             engine = payload.get("engine", "crf")
-            if not isinstance(text, str) or not isinstance(engine, str):
-                raise TypeError("text and engine must be strings")
-            tokens = KhmerTokenizer(engine=engine).tokenize(text)
+            khmer_only = payload.get("khmer_only", False)
+            if (
+                not isinstance(text, str)
+                or not isinstance(engine, str)
+                or not isinstance(khmer_only, bool)
+            ):
+                raise TypeError(
+                    "text and engine must be strings; khmer_only must be a boolean"
+                )
+            tokens = KhmerTokenizer(engine=engine).tokenize(
+                text, khmer_only=khmer_only
+            )
             body = json.dumps({"tokens": tokens}, ensure_ascii=False).encode("utf-8")
             self._send(HTTPStatus.OK, body, "application/json; charset=utf-8")
         except (TypeError, ValueError, KeyError, json.JSONDecodeError) as error:

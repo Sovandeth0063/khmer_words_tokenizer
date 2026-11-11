@@ -13,13 +13,13 @@ license = { file = "LICENSE" }
 authors = [{ name = "Khmer Tokenizer Contributors" }]
 
 [project.scripts]
-khmer-tokenizer = "khmer_tokenizer.cli:main"
+khmer-tokenizer = "tokenizer.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["khmer_tokenizer*"]
+include = ["tokenizer*"]
 
 [tool.setuptools.package-data]
-khmer_tokenizer = [
+tokenizer = [
     "resources/*.txt",
     "resources/*.crfsuite",
     "resources/*.json",

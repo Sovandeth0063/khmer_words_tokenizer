@@ -1,7 +1,7 @@
 """
-Module: normalizer/__init__.py
+Module: normalizer.py
 Purpose: Load normalization rules and expose the Khmer normalization pipeline.
-Usage: from khmer_tokenizer.normalizer import normalize
+Usage: from tokenizer.normalizer import normalize
 """
 from __future__ import annotations
 
@@ -11,13 +11,152 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Optional, Union
 
-from khmer_tokenizer.exceptions import InvalidConfigurationError
-from khmer_tokenizer.normalizer.cleaner import CleanText, extract_boundary_cues
-from khmer_tokenizer.normalizer.reorder import reorder_khmer_clusters
-from khmer_tokenizer.normalizer.vowels import (
-    apply_character_replacements,
-    resolve_shifter_collision,
+from tokenizer.constants import (
+    COENG,
+    DEPENDENT_VOWEL_RANGE,
+    DIACRITIC_RANGE,
+    KHMER_BASE_RANGE,
+    ZERO_WIDTH_CHARACTERS,
+    ZWSP,
 )
+from tokenizer.exceptions import InvalidConfigurationError
+
+# ---------------------------------------------------------------------------
+# cleaner
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class CleanText:
+    """Normalized text with boundary positions captured before cleanup."""
+
+    text: str
+    zwsp_positions: tuple[int, ...]
+
+
+def extract_boundary_cues(
+    text: str, zero_width_characters: frozenset[str] = ZERO_WIDTH_CHARACTERS
+) -> CleanText:
+    """Remove invisible controls and record ZWSP positions in cleaned text."""
+    cleaned: list[str] = []
+    positions: list[int] = []
+    for character in text:
+        if character == ZWSP:
+            positions.append(len(cleaned))
+        elif character not in zero_width_characters:
+            cleaned.append(character)
+    return CleanText("".join(cleaned), tuple(positions))
+
+
+# ---------------------------------------------------------------------------
+# vowels
+# ---------------------------------------------------------------------------
+
+
+def apply_character_replacements(
+    text: str, replacements: Mapping[str, str]
+) -> str:
+    """Apply configured literal character replacements."""
+    for source, target in replacements.items():
+        text = text.replace(source, target)
+    return text
+
+
+def resolve_shifter_collision(
+    text: str,
+    *,
+    source: str,
+    upper_vowels: set[str],
+    muusikatoan_bases: set[str],
+    triisap_bases: set[str],
+) -> str:
+    """Resolve a mistyped shifter using base and vowel context."""
+    characters = list(text)
+    for index, character in enumerate(characters):
+        if character != source or index == 0:
+            continue
+        previous = characters[index - 1]
+        following = characters[index + 1] if index + 1 < len(characters) else ""
+        if following not in upper_vowels:
+            continue
+        if previous in triisap_bases:
+            characters[index] = "\u17ca"
+        elif previous in muusikatoan_bases:
+            characters[index] = "\u17c9"
+    return "".join(characters)
+
+
+# ---------------------------------------------------------------------------
+# reorder
+# ---------------------------------------------------------------------------
+
+
+def _is_base(character: str) -> bool:
+    """Check whether a character is a Khmer base character."""
+    return ord(character) in KHMER_BASE_RANGE
+
+
+def _mark_order(character: str) -> int:
+    """Return the canonical ordering group for a cluster character."""
+    codepoint = ord(character)
+    if character in {"\u17cc", "\u17c9", "\u17ca"}:
+        return 0
+    if character == COENG or _is_base(character):
+        return 1
+    if codepoint in DEPENDENT_VOWEL_RANGE:
+        return 2
+    if codepoint in DIACRITIC_RANGE or character in {"\u17d3", "\u17dd"}:
+        return 3
+    return 4
+
+
+def reorder_khmer_clusters(text: str) -> str:
+    """Place Khmer cluster marks in the documented stable canonical order."""
+    output: list[str] = []
+    pending_marks: list[str] = []
+    index = 0
+    while index < len(text):
+        if not _is_base(text[index]):
+            if _mark_order(text[index]) < 4:
+                pending_marks.append(text[index])
+            else:
+                output.extend(pending_marks)
+                pending_marks.clear()
+                output.append(text[index])
+            index += 1
+            continue
+
+        base = text[index]
+        marks = pending_marks
+        pending_marks = []
+        index += 1
+        while index < len(text):
+            if _is_base(text[index]):
+                if not marks or marks[-1] != COENG:
+                    break
+                marks.append(text[index])
+                index += 1
+                continue
+            if _mark_order(text[index]) < 4:
+                marks.append(text[index])
+            else:
+                break
+            index += 1
+        output.append(base)
+        output.extend(
+            character
+            for _, character in sorted(
+                enumerate(marks),
+                key=lambda item: (_mark_order(item[1]), item[0]),
+            )
+        )
+    output.extend(pending_marks)
+    return "".join(output)
+
+
+# ---------------------------------------------------------------------------
+# KhmerNormalizer + normalize()
+# ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -69,12 +208,8 @@ class KhmerNormalizer:
         path = (
             Path(rules_path)
             if rules_path is not None
-            else Path(__file__).parent.parent
-            / "resources"
-            / "normalizer_rules.json"
+            else Path(__file__).parent / "resources" / "normalizer_rules.json"
         )
-        if rules_path is None and not path.exists():
-            path = Path(__file__).parents[2] / "configs" / "normalizer_rules.json"
         rules = _load_rules(path)
         try:
             composite_vowels = _string_mapping(
@@ -148,4 +283,4 @@ def normalize(text: str) -> NormalizedText:
     return _default_normalizer.normalize(text)
 
 
-__all__ = ["KhmerNormalizer", "NormalizedText", "normalize"]
+__all__ = ["KhmerNormalizer", "NormalizedText", "normalize", "reorder_khmer_clusters"]

@@ -8,9 +8,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional, Union
 
-from khmer_tokenizer.models.trie import Trie
-from khmer_tokenizer.normalizer import normalize
-from khmer_tokenizer.segmenter import lex, segment_kcc
+from tokenizer.assembler import drop_sentence_marks
+from tokenizer.normalizer import normalize
+from tokenizer.segmenter import lex, segment_kcc
+from tokenizer.trie import Trie
 
 
 class BiMMTokenizer:
@@ -39,7 +40,8 @@ class BiMMTokenizer:
         result: list[str] = []
         index = 0
         while index < len(clusters):
-            length = self.trie.longest_match(clusters, index) or 1
+            matches = self.trie.preferred_match_lengths(clusters, index)
+            length = max(matches, default=1)
             result.append("".join(clusters[index : index + length]))
             index += length
         return result
@@ -51,7 +53,9 @@ class BiMMTokenizer:
         while end:
             best_start = end - 1
             for start in range(end - 1, -1, -1):
-                if self.trie.longest_match(clusters, start) == end - start:
+                if end - start in self.trie.preferred_match_lengths(
+                    clusters, start
+                ):
                     best_start = start
                     break
             result.append("".join(clusters[best_start:end]))
@@ -77,13 +81,20 @@ class BiMMTokenizer:
             key=self._score,
         )
 
-    def tokenize(self, text: str, keep_whitespace: bool = False) -> list[str]:
-        """Normalize and tokenize Khmer and passthrough spans."""
+    def tokenize(
+        self,
+        text: str,
+        keep_whitespace: bool = False,
+        khmer_only: bool = False,
+    ) -> list[str]:
+        """Normalize and tokenize Khmer and optional non-Khmer spans."""
         normalized = normalize(text)
         output: list[str] = []
         for span in lex(normalized.text):
             if span.kind == "khmer":
                 output.extend(self.segment(span.text))
-            elif span.kind != "whitespace" or keep_whitespace:
+            elif not khmer_only and (
+                span.kind != "whitespace" or keep_whitespace
+            ):
                 output.append(span.text)
-        return output
+        return drop_sentence_marks(output)

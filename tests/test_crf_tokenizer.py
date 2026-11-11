@@ -9,12 +9,11 @@ from pathlib import Path
 
 import pytest
 
-from khmer_tokenizer import KhmerTokenizer, tokenize
-from khmer_tokenizer.exceptions import MalformedModelError
-from khmer_tokenizer.models.crf.crf_engine import CRFEngine
-from khmer_tokenizer.models.crf.features import extract_features
-from khmer_tokenizer.models.trie import Trie
-from khmer_tokenizer.postprocessor.assembler import assemble_tokens
+from tokenizer import KhmerTokenizer, apply_maximum, tokenize
+from tokenizer.exceptions import MalformedModelError
+from tokenizer.assembler import assemble_tokens
+from tokenizer.crf import CRFEngine, extract_features
+from tokenizer.trie import Trie
 
 
 def test_assemble_bies_tags() -> None:
@@ -84,3 +83,27 @@ def test_json_model_can_be_loaded(tmp_path: Path) -> None:
     model = tmp_path / "model.crfsuite"
     model.write_text(json.dumps({"version": 1}), encoding="utf-8")
     assert CRFEngine(model_path=model)
+
+
+def test_apply_maximum_keeps_long_dictionary_word_intact() -> None:
+    """Verify default tokenization merges over-split dictionary words."""
+    assert tokenize("ប្រធានាធិបតី") == ["ប្រធានាធិបតី"]
+    assert tokenize("លោកប្រធានាធិបតីទៅសាកលវិទ្យាល័យ") == [
+        "លោក",
+        "ប្រធានាធិបតី",
+        "ទៅ",
+        "សាកលវិទ្យាល័យ",
+    ]
+    assert tokenize("ប្រធានាធិបតី", apply_maximum=False) == [
+        "ប្រ",
+        "ធានា",
+        "ធិបតី",
+    ]
+
+
+def test_apply_maximum_helper_merges_and_respects_boundaries() -> None:
+    """Verify apply_maximum merges dictionary tokens without crossing spaces."""
+    trie = Trie(["ប្រ", "ធានា", "ធិបតី", "ប្រធានាធិបតី", "ប្រទេស", "កម្ពុជា", "ប្រទេសកម្ពុជា"])
+    assert apply_maximum(["ប្រ", "ធានា", "ធិបតី"], trie) == ["ប្រធានាធិបតី"]
+    assert apply_maximum(["ប្រ", " ", "ធានា"], trie) == ["ប្រ", " ", "ធានា"]
+    assert apply_maximum(["ប្រទេស", "កម្ពុជា"], trie) == ["ប្រទេស", "កម្ពុជា"]

@@ -1,6 +1,6 @@
 """Tests for mixed input, controls, malformed clusters, and empty text."""
 
-from khmer_tokenizer import KhmerTokenizer, tokenize
+from tokenizer import KhmerTokenizer, tokenize
 
 
 def test_mixed_text_and_non_khmer_spans_are_preserved() -> None:
@@ -36,3 +36,23 @@ def test_whitespace_can_be_preserved_for_exact_reconstruction() -> None:
 def test_malformed_coeng_input_does_not_crash() -> None:
     """Verify incomplete Khmer clusters remain observable."""
     assert KhmerTokenizer().tokenize("\u17d2\u17d2") == ["\u17d2", "\u17d2"]
+
+
+def test_khmer_only_removes_non_khmer_tokens() -> None:
+    """Verify khmer_only drops punctuation, Latin, numbers, links, and spaces."""
+    assert tokenize("ខ្ញុំស្រឡាញ់ប្រទេសកម្ពុជា !", khmer_only=True) == [
+        "ខ្ញុំ",
+        "ស្រឡាញ់",
+        "ប្រទេស",
+        "កម្ពុជា",
+    ]
+    assert tokenize(
+        "សូមមើល https://example.com test@example.com 12.5 😊",
+        khmer_only=True,
+    ) == ["សូម", "មើល"]
+    assert tokenize("ក ខ !", keep_whitespace=True, khmer_only=True) == ["ក", "ខ"]
+    assert tokenize("Hello 2026!", khmer_only=True) == []
+    assert KhmerTokenizer(engine="bimm").tokenize(
+        "ខ្ញុំស្រឡាញ់ប្រទេសកម្ពុជា ! hello 123",
+        khmer_only=True,
+    ) == ["ខ្ញុំ", "ស្រឡាញ់", "ប្រទេសកម្ពុជា"]

@@ -4,7 +4,7 @@ Purpose: Test Khmer Character Cluster segmentation and integrity.
 Usage: python -m pytest tests\test_kcc.py -v
 """
 
-from khmer_tokenizer.segmenter.kcc import segment_kcc
+from tokenizer.segmenter import segment_kcc
 
 
 def test_segment_kcc_preserves_subscripts_and_vowels() -> None:

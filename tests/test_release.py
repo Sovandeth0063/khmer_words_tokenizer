@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from khmer_tokenizer import KhmerTokenizer, tokenize
+from tokenizer import KhmerTokenizer, tokenize
 
 ROOT = Path(__file__).parents[1]
 
@@ -21,7 +21,7 @@ def test_canonical_api_and_bimm_smoke_test() -> None:
 def test_model_metadata_is_explicit_and_valid() -> None:
     """Verify the release metadata records the baseline limitations."""
     metadata = json.loads(
-        (ROOT / "pretrained" / "model_metadata.json").read_text(
+        (ROOT / "tokenizer" / "resources" / "model_metadata.json").read_text(
             encoding="utf-8"
         )
     )

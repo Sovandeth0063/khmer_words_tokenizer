@@ -6,8 +6,8 @@ Usage: python -m pytest tests\test_bimm.py -v
 
 from pathlib import Path
 
-from khmer_tokenizer.models.bimm import BiMMTokenizer
-from khmer_tokenizer.models.trie import Trie
+from tokenizer.bimm import BiMMTokenizer
+from tokenizer.trie import Trie
 
 
 def test_trie_matches_longest_word() -> None:

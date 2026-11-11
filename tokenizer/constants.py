@@ -1,7 +1,7 @@
 """
 Module: constants.py
 Purpose: Define shared Khmer Unicode ranges, controls, and tokenizer tags.
-Usage: from khmer_tokenizer.constants import BIES_TAGS
+Usage: from tokenizer.constants import BIES_TAGS
 """
 from __future__ import annotations
 
@@ -22,6 +22,9 @@ ZWSP: Final[str] = "\u200b"
 ZERO_WIDTH_CHARACTERS: Final[frozenset[str]] = frozenset(
     {"\u200b", "\u200c", "\u200d", "\ufeff"}
 )
+
+# Khmer sentence terminators kept as boundaries but removed from token output.
+KHMER_SENTENCE_MARKS: Final[frozenset[str]] = frozenset({"\u17d4", "\u17d5"})
 
 # BIES labels used later by the word-boundary prediction model.
 BIES_TAGS: Final[tuple[str, ...]] = ("B", "I", "E", "S")

@@ -53,8 +53,8 @@ The tokenizer processes text through a layered pipeline:
 5. **Post-processing** assembles predicted boundaries into final word tokens
    while preserving the original non-Khmer spans.
 
-The public API is exposed through `khmer_tokenizer`, the command-line
-interface through `khmer_tokenizer.cli`, and the local browser interface
+The public API is exposed through `tokenizer`, the command-line
+interface through `tokenizer.cli`, and the local browser interface
 through `scripts\web_app.py`. See the detailed [system architecture](docs/architecture/system_architecture.md)
 for the data flow, module responsibilities, and design decisions.
 
@@ -120,13 +120,13 @@ py -m pip install -e ".[dev]"
 Install the latest local wheel:
 
 ```powershell
-py -m pip install dist\khmer_tokenizer-0.1.1-py3-none-any.whl
+py -m pip install dist\tokenizer-0.1.1-py3-none-any.whl
 ```
 
 ## Quickstart
 
 ```python
-from khmer_tokenizer import tokenize
+from tokenizer import tokenize
 
 tokens = tokenize("ខ្ញុំស្រឡាញ់ប្រទេសកម្ពុជា")
 print(tokens)
@@ -143,7 +143,7 @@ tokens = tokenize("ក ខ", keep_whitespace=True)
 Use the alternative BiMM engine:
 
 ```python
-from khmer_tokenizer import KhmerTokenizer
+from tokenizer import KhmerTokenizer
 
 tokenizer = KhmerTokenizer(engine="bimm")
 tokens = tokenizer.tokenize("ខ្ញុំស្រឡាញ់ប្រទេសកម្ពុជា")
@@ -162,7 +162,7 @@ assert tokenizer.tokenize("ប្រទេសកម្ពុជា") == ["ប្
 Read from standard input and write space-separated tokens:
 
 ```powershell
-py -m khmer_tokenizer.cli
+py -m tokenizer.cli
 ```
 
 Process a file with the BiMM engine and write another file:
@@ -226,7 +226,7 @@ it, runtime metrics are reported but accuracy metrics are left as `null`.
 ## Current Normalization API
 
 ```python
-from khmer_tokenizer import normalize
+from tokenizer import normalize
 
 result = normalize("ក\u200bខ")
 print(result.text)
@@ -253,7 +253,7 @@ py -m pytest tests\test_normalizer.py -v
 ## Project Structure
 
 ```text
-khmer_tokenizer/   Library source
+tokenizer/   Library source
 configs/           Normalization and model configuration
 data/              Dictionaries and corpus data
 docs/              Architecture, requirements, and implementation tasks

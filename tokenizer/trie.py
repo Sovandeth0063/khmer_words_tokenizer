@@ -1,7 +1,7 @@
 """
 Module: trie.py
 Purpose: Store Khmer words as KCC sequences for fast dictionary matching.
-Usage: Trie.from_file("data/dictionaries/chuon_nath_dict.txt")
+Usage: Trie.from_file("tokenizer/resources/khmer_dictionary.txt")
 """
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Union
 
-from khmer_tokenizer.segmenter.kcc import segment_kcc
+from tokenizer.segmenter import segment_kcc
 
 
 class _TrieNode:
@@ -28,8 +28,10 @@ class Trie:
         self._root = _TrieNode()
         self._base_words: set[str] = set()
         self._custom_words: set[str] = set()
+        self._custom_cluster_words: set[tuple[str, ...]] = set()
+        self._forced_splits: set[tuple[str, ...]] = set()
         for word in words:
-            self.add_word(word)
+            self.add_word(word, custom=False)
 
     def add_word(self, word: str, *, custom: bool = True) -> None:
         """Add a non-empty Khmer word to the Trie."""
@@ -42,6 +44,7 @@ class Trie:
         node.terminal = True
         if custom:
             self._custom_words.add(word.strip())
+            self._custom_cluster_words.add(tuple(clusters))
         else:
             self._base_words.add(word.strip())
 
@@ -60,6 +63,7 @@ class Trie:
         if normalized_word not in self._custom_words:
             return
         self._custom_words.remove(normalized_word)
+        self._custom_cluster_words.discard(tuple(clusters))
         if normalized_word in self._base_words:
             return
         node.terminal = False
@@ -94,6 +98,44 @@ class Trie:
                 lengths.append(index - start + 1)
         return lengths
 
+    def is_forced_split(
+        self, clusters: list[str], start: int, length: int
+    ) -> bool:
+        """Return whether a lexical-boundary rule splits this exact span."""
+        span = tuple(clusters[start : start + length])
+        return span in self._forced_splits and span not in self._custom_cluster_words
+
+    def load_split_rules(self, path: Union[str, Path]) -> None:
+        """Load tab-separated phrases that must be split at lexical boundaries."""
+        for line_number, line in enumerate(
+            Path(path).read_text(encoding="utf-8-sig").splitlines(), 1
+        ):
+            fields = line.split("\t")
+            if len(fields) < 2 or not fields[0].strip():
+                raise ValueError(f"Invalid split rule at line {line_number}")
+            phrase = tuple(segment_kcc(fields[0].strip()))
+            parts = tuple(part.strip() for part in fields[1:] if part.strip())
+            if len(parts) < 2 or tuple(
+                cluster
+                for part in parts
+                for cluster in segment_kcc(part)
+            ) != phrase:
+                raise ValueError(f"Invalid split rule at line {line_number}")
+            self._forced_splits.add(phrase)
+
+    def preferred_match_lengths(
+        self, clusters: list[str], start: int = 0
+    ) -> list[int]:
+        """Return matches after preferring valid lexical decompositions."""
+        lengths = self.match_lengths(clusters, start)
+        decomposable = {
+            length
+            for length in lengths
+            if self.is_forced_split(clusters, start, length)
+        }
+        alternatives = [length for length in lengths if length not in decomposable]
+        return alternatives or lengths
+
     @property
     def custom_words(self) -> frozenset[str]:
         """Return custom dictionary words without exposing mutable state."""
@@ -124,7 +166,19 @@ class Trie:
             if line.strip():
                 self.add_word(line.strip())
 
+    def lookup(self, word: str) -> tuple[bool, bool]:
+        """Return (is_prefix, is_word) for a Khmer string in one Trie walk."""
+        clusters = segment_kcc(word.strip())
+        if not clusters:
+            return False, False
+        node = self._root
+        for cluster in clusters:
+            child = node.children.get(cluster)
+            if child is None:
+                return False, False
+            node = child
+        return True, node.terminal
+
     def contains(self, word: str) -> bool:
         """Return whether the exact word is present in the Trie."""
-        clusters = segment_kcc(word.strip())
-        return bool(clusters) and self.longest_match(clusters) == len(clusters)
+        return self.lookup(word)[1]

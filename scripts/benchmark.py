@@ -13,8 +13,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Optional
 
-from khmer_tokenizer import KhmerTokenizer
-from khmer_tokenizer.segmenter.kcc import segment_kcc
+from tokenizer import KhmerTokenizer
+from tokenizer.segmenter import segment_kcc
 
 
 def _percentile(values: list[float], percentile: float) -> float:
